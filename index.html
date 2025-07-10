@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RDL Hex Converter & SQL Extractor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #3498db;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-display {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            background: white;
+            border: 2px dashed #3498db;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-input-display:hover {
+            background: #ebf3fd;
+            border-color: #2980b9;
+        }
+
+        .file-input-display.dragover {
+            background: #e3f2fd;
+            border-color: #1976d2;
+            transform: scale(1.02);
+        }
+
+        .file-icon {
+            font-size: 24px;
+            margin-right: 10px;
+            color: #3498db;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(149, 165, 166, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .results {
+            margin-top: 30px;
+        }
+
+        .query-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .query-block h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .query-code {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #2980b9;
+        }
+
+        .copy-btn.copied {
+            background: #27ae60;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #27ae60;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #e74c3c;
+        }
+
+        .alert-info {
+            background: #cce7ff;
+            color: #004085;
+            border-color: #3498db;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #ecf0f1;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 RDL Hex Converter & SQL Extractor</h1>
+            <p>Convert hex-encoded RDL reports and extract SQL queries with ease</p>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>📁 Input Source</h2>
+                <div class="input-group">
+                    <label>Choose input method:</label>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="setInputMethod('file')">📁 Upload File</button>
+                        <button class="btn btn-secondary" onclick="setInputMethod('paste')">📋 Paste Text</button>
+                    </div>
+                </div>
+
+                <div id="fileInput" class="input-group">
+                    <label>Upload hex-encoded RDL file:</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fileUpload" class="file-input" accept=".txt,.rdl,*">
+                        <div class="file-input-display" id="fileDisplay">
+                            <span class="file-icon">📁</span>
+                            <span>Click to select file or drag & drop here</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="textInput" class="input-group hidden">
+                    <label>Paste hex-encoded content:</label>
+                    <textarea id="hexInput" rows="8" placeholder="Paste your hex-encoded RDL content here..."></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="convertHexToRdl()">🔄 Convert & Extract</button>
+                    <button class="btn btn-secondary" onclick="clearAll()">🗑️ Clear All</button>
+                </div>
+
+                <div id="progressBar" class="progress-bar hidden">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div id="results" class="results hidden">
+                <div class="section">
+                    <h2>📊 Conversion Results</h2>
+                    <div id="alerts"></div>
+                    <div id="stats" class="stats"></div>
+                    <div id="sqlQueries"></div>
+                </div>
+
+                <div class="section">
+                    <h2>📄 Full RDL Content</h2>
+                    <div class="button-group">
+                        <button class="btn btn-success" onclick="downloadRdl()">💾 Download RDL File</button>
+                        <button class="btn btn-secondary" onclick="copyRdlContent()">📋 Copy RDL Content</button>
+                    </div>
+                    <textarea id="rdlOutput" rows="20" readonly></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRdlContent = '';
+        let currentQueries = [];
+
+        function setInputMethod(method) {
+            const fileInput = document.getElementById('fileInput');
+            const textInput = document.getElementById('textInput');
+            
+            if (method === 'file') {
+                fileInput.classList.remove('hidden');
+                textInput.classList.add('hidden');
+            } else {
+                fileInput.classList.add('hidden');
+                textInput.classList.remove('hidden');
+            }
+        }
+
+        function setupFileInput() {
+            const fileInput = document.getElementById('fileUpload');
+            const fileDisplay = document.getElementById('fileDisplay');
+
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    fileDisplay.innerHTML = `<span class="file-icon">📄</span><span>${file.name}</span>`;
+                }
+            });
+
+            // Drag and drop functionality
+            fileDisplay.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                fileDisplay.classList.add('dragover');
+            });
+
+            fileDisplay.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                fileDisplay.classList.remove('dragover');
+            });
+
+            fileDisplay.addEventListener('drop', function(e) {
+                e.preventDefault();
+                fileDisplay.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    fileDisplay.innerHTML = `<span class="file-icon">📄</span><span>${files[0].name}</span>`;
+                }
+            });
+        }
+
+        function showProgress(show = true) {
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            
+            if (show) {
+                progressBar.classList.remove('hidden');
+                progressFill.style.width = '0%';
+                
+                // Simulate progress
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 30;
+                    if (progress > 90) progress = 90;
+                    progressFill.style.width = progress + '%';
+                    
+                    if (progress >= 90) {
+                        clearInterval(interval);
+                    }
+                }, 100);
+                
+                return interval;
+            } else {
+                progressBar.classList.add('hidden');
+            }
+        }
+
+        function completeProgress(interval) {
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = '100%';
+            
+            setTimeout(() => {
+                showProgress(false);
+                if (interval) clearInterval(interval);
+            }, 500);
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertsContainer = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alertsContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function hexToString(hex) {
+            // Remove any prefixes and whitespace
+            hex = hex.replace(/^0x/i, '').replace(/^EFBBBF/i, '').replace(/\s/g, '');
+            
+            let result = '';
+            for (let i = 0; i < hex.length; i += 2) {
+                const hexPair = hex.substr(i, 2);
+                if (hexPair.length === 2) {
+                    result += String.fromCharCode(parseInt(hexPair, 16));
+                }
+            }
+            return result;
+        }
+
+        function extractSqlQueries(xmlContent) {
+            const queries = [];
+            const commandTextRegex = /<CommandText>(.*?)<\/CommandText>/gs;
+            let match;
+            
+            while ((match = commandTextRegex.exec(xmlContent)) !== null) {
+                let query = match[1];
+                // Decode HTML entities
+                query = query.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+                // Clean up whitespace
+                query = query.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+                queries.push(query.trim());
+            }
+            
+            return queries;
+        }
+
+        function displayStats(xmlContent, queries) {
+            const statsContainer = document.getElementById('stats');
+            
+            const dataSourceCount = (xmlContent.match(/<DataSource /g) || []).length;
+            const dataSetCount = (xmlContent.match(/<DataSet /g) || []).length;
+            const parameterCount = (xmlContent.match(/<QueryParameter /g) || []).length;
+            
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${queries.length}</div>
+                    <div class="stat-label">SQL Queries</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${dataSetCount}</div>
+                    <div class="stat-label">Data Sets</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${dataSourceCount}</div>
+                    <div class="stat-label">Data Sources</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${parameterCount}</div>
+                    <div class="stat-label">Parameters</div>
+                </div>
+            `;
+        }
+
+        function displayQueries(queries) {
+            const queriesContainer = document.getElementById('sqlQueries');
+            
+            if (queries.length === 0) {
+                queriesContainer.innerHTML = '<div class="alert alert-info">No SQL queries found in the RDL file.</div>';
+                return;
+            }
+            
+            let html = '';
+            queries.forEach((query, index) => {
+                html += `
+                    <div class="query-block">
+                        <h3>Query ${index + 1}</h3>
+                        <button class="copy-btn" onclick="copyQuery(${index})">Copy</button>
+                        <div class="query-code">${escapeHtml(query)}</div>
+                    </div>
+                `;
+            });
+            
+            queriesContainer.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function copyQuery(index) {
+            const query = currentQueries[index];
+            navigator.clipboard.writeText(query).then(() => {
+                const btn = document.querySelectorAll('.copy-btn')[index];
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function copyRdlContent() {
+            navigator.clipboard.writeText(currentRdlContent).then(() => {
+                showAlert('RDL content copied to clipboard!', 'success');
+            });
+        }
+
+        function downloadRdl() {
+            const blob = new Blob([currentRdlContent], { type: 'application/xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'report.rdl';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function convertHexToRdl() {
+            const progressInterval = showProgress();
+            
+            try {
+                let hexContent = '';
+                
+                // Get input content
+                const fileInput = document.getElementById('fileUpload');
+                const textInput = document.getElementById('hexInput');
+                
+                if (!document.getElementById('fileInput').classList.contains('hidden') && fileInput.files.length > 0) {
+                    // File input
+                    const file = fileInput.files[0];
+                    hexContent = await file.text();
+                } else if (!document.getElementById('textInput').classList.contains('hidden') && textInput.value.trim()) {
+                    // Text input
+                    hexContent = textInput.value.trim();
+                } else {
+                    throw new Error('Please provide hex content either by uploading a file or pasting text.');
+                }
+                
+                if (!hexContent) {
+                    throw new Error('No content provided.');
+                }
+                
+                // Convert hex to XML
+                const xmlContent = hexToString(hexContent);
+                
+                if (!xmlContent || !xmlContent.includes('<Report')) {
+                    throw new Error('Invalid hex content or not a valid RDL file.');
+                }
+                
+                // Extract SQL queries
+                const queries = extractSqlQueries(xmlContent);
+                
+                // Store results
+                currentRdlContent = xmlContent;
+                currentQueries = queries;
+                
+                // Display results
+                document.getElementById('results').classList.remove('hidden');
+                document.getElementById('rdlOutput').value = xmlContent;
+                
+                displayStats(xmlContent, queries);
+                displayQueries(queries);
+                
+                showAlert(`Successfully converted! Found ${queries.length} SQL queries.`, 'success');
+                
+                // Scroll to results
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                showAlert(`Error: ${error.message}`, 'error');
+            } finally {
+                completeProgress(progressInterval);
+            }
+        }
+
+        function clearAll() {
+            // Clear inputs
+            document.getElementById('fileUpload').value = '';
+            document.getElementById('hexInput').value = '';
+            document.getElementById('rdlOutput').value = '';
+            
+            // Reset file display
+            document.getElementById('fileDisplay').innerHTML = 
+                '<span class="file-icon">📁</span><span>Click to select file or drag & drop here</span>';
+            
+            // Hide results
+            document.getElementById('results').classList.add('hidden');
+            
+            // Clear stored data
+            currentRdlContent = '';
+            currentQueries = [];
+            
+            // Clear alerts
+            document.getElementById('alerts').innerHTML = '';
+            
+            showAlert('All data cleared!', 'info');
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFileInput();
+            setInputMethod('file'); // Default to file input
+        });
+    </script>
+</body>
+</html>
